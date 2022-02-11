@@ -9,14 +9,15 @@ import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
 
-    public UserDaoHibernateImpl() {
+    private Session session;
+    private Transaction transaction = null;
 
+    public UserDaoHibernateImpl() {
+        session = Util.getSessionFactory().openSession();
     }
 
     public void createUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-
+        transaction = session.beginTransaction();
         String sql = "CREATE TABLE IF NOT EXISTS `user` " +
                 "(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                 "`name` VARCHAR(50) NOT NULL, " +
@@ -26,49 +27,36 @@ public class UserDaoHibernateImpl implements UserDao {
         Query query = session.createSQLQuery(sql).addEntity(User.class);
         query.executeUpdate();
         transaction.commit();
-        session.close();
     }
 
     public void dropUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-
+        transaction = session.beginTransaction();
         String sql = "DROP TABLE IF EXISTS user";
 
         Query query = session.createSQLQuery(sql).addEntity(User.class);
         query.executeUpdate();
         transaction.commit();
-        session.close();
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
+        transaction = session.beginTransaction();
         session.save(new User(name, lastName, age));
         transaction.commit();
-        session.close();
     }
 
     public void removeUserById(long id) {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction tx1 = session.beginTransaction();
+        transaction = session.beginTransaction();
         session.delete(session.get(User.class, id));
-        tx1.commit();
-        session.close();
+        transaction.commit();
     }
 
     public List<User> getAllUsers() {
-        return (List<User>) Util.getSessionFactory()
-                .openSession()
-                .createQuery("FROM User")
-                .list();
+        return (List<User>) session.createQuery("FROM User").list();
     }
 
     public void cleanUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
+        transaction = session.beginTransaction();
         session.createQuery("DELETE FROM User").executeUpdate();
         transaction.commit();
-        session.close();
     }
 }
